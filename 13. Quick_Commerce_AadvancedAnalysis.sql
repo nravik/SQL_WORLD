@@ -86,15 +86,10 @@ INSERT INTO orders VALUES ('OF1900191872','UVW7890123456JKL','2025-02-25 19:15:0
 INSERT INTO orders VALUES ('OF1900191873','UVW7890123456JKL','2025-03-25 19:15:00','PIZZA123','Italian','Delivered','TASTY50');
 
 
---select * from orders 
+select * from orders 
 
 
---select * from orders as o where o.Customer_code is null
-
-Question : Find the top restaurant under each cuisine ?
-
-
-solution : 
+select * from orders as o where o.Customer_code is null
 
 
 WITH cte AS (
@@ -116,3 +111,111 @@ SELECT
     ROW_NUMBER() OVER (PARTITION BY Cuisine ORDER BY no_of_orders DESC) AS rn
 FROM cte ) as a
 where rn=1
+
+
+-- Question 2: find the daily new customer count from the launch date 
+
+
+
+with cte as (
+select Customer_code, cast(min(placed_at) as date) as first_order_date from orders
+group by Customer_code
+)
+
+select first_order_date, count(customer_code) as no_new_customers from cte
+group by first_order_date
+order by  first_order_date asc
+
+
+    --- Ques 3 - count all users who were aquired in jan 2025 and only placed one order in jan and no other orders
+
+
+SELECT Customer_code, COUNT(*) AS no_of_orders
+FROM orders
+GROUP BY Customer_code
+HAVING COUNT(*) = 1                         
+   AND MIN(Placed_at) >= '2025-01-01'      
+   AND MIN(Placed_at) <  '2025-02-01';     
+
+
+---
+
+
+---- ques 4 - list all customers with no order in last 7 days but were acquired one month ago with their first order on promo
+
+
+
+WITH cte AS (
+    SELECT 
+        Customer_code, 
+        MIN(placed_at) AS first_order_date, 
+        MAX(placed_at) AS latest_order_date
+    FROM orders
+    GROUP BY Customer_code
+)
+SELECT 
+    cte.Customer_code,
+    cte.first_order_date,
+    cte.latest_order_date,
+    o.Promo_code_Name
+FROM cte
+INNER JOIN orders o 
+    ON cte.Customer_code = o.Customer_code 
+    AND cte.first_order_date = o.placed_at
+WHERE 
+    -- 1. No order in the last 7 days
+    cte.latest_order_date < DATEADD(day, -7, GETDATE())
+    
+    -- 2. Acquired "one month ago" (Joining between 30 and 60 days ago)
+    AND cte.first_order_date >= DATEADD(month, -2, GETDATE())
+    AND cte.first_order_date < DATEADD(month, -1, GETDATE())
+    
+    -- 3. First order was on a promo
+    AND o.Promo_code_Name IS NOT NULL;
+
+
+
+    --- que 5 - Growth team us planning to create a trigger that will taregt cstomers after every 3rd order by end of day
+
+
+
+    with cte as (
+    select *,
+    row_number() over (partition by customer_code order by placed_at asc) as order_number
+    
+    from orders)
+
+    select * from cte
+    where order_number % 3 = 0 
+    and cast(placed_at as date) = cast (getdate() as date)
+
+    -- que 6 -- list of customers who placed more than 1 order and all their orders on a promo
+
+select Customer_code, count(*) as no_all_orders, count(promo_code_name) as no_promo_orders
+from orders
+
+group by Customer_code
+having count(*) = count(promo_code_name)
+and  count(*) > 1
+
+
+--- que 7 -- what percent of customers were organicall acquired in jan 2025 ( placed their first order without promo)
+
+
+--
+
+WITH CTE AS (
+
+SELECT *,
+ROW_NUMBER() OVER (PARTITION BY CUSTOMER_CODE ORDER BY PLACED_AT) AS RN
+
+FROM ORDERS 
+WHERE MONTH(PLACED_AT) = 1 AND YEAR(PLACED_AT) = 2025 )
+
+SELECT COUNT
+(CASE WHEN RN=1 AND PROMO_CODE_NAME IS NULL THEN Customer_code END )*100.0
+/
+COUNT(DISTINCT CUSTOMER_CODE) FROM CTE
+
+
+
