@@ -38,7 +38,37 @@ Table: returns (primary key : order_id)
 
 +-------------+-----------+
 
+Part 1: DDL/DML
 
+ CREATE TABLE orders (
+    customer_name VARCHAR(10),
+    order_date DATE,
+    order_id INT PRIMARY KEY,
+    sales INT
+);
+
+CREATE TABLE returns (
+    order_id INT PRIMARY KEY,
+    return_date DATE
+);
+
+INSERT INTO orders VALUES 
+('Aman', '2024-01-01', 101, 500),
+('Aman', '2024-01-05', 102, 300),
+('Aman', '2024-01-10', 103, 150),
+('Priya', '2024-01-02', 104, 1000),
+('Priya', '2024-01-15', 105, 450),
+('Rahul', '2024-01-03', 106, 200),
+('Rahul', '2024-01-20', 107, 600),
+('Sneha', '2024-01-04', 108, 800);
+
+INSERT INTO returns VALUES 
+(101, '2024-01-03'),
+(102, '2024-01-07'),
+(104, '2024-01-05'),
+(106, '2024-01-05');
+
+part 2: 
 
 Solution : 
 
